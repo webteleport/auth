@@ -5,14 +5,32 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"path"
 	"strings"
 	"sync"
 
 	"github.com/google/uuid"
+	"golang.org/x/exp/slices"
 )
 
 //go:embed www
 var WWW embed.FS
+
+func getAllFilenames(efs fs.FS) (files []string, err error) {
+	if err := fs.WalkDir(efs, ".", func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() {
+			return nil
+		}
+
+		files = append(files, path)
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return files, nil
+}
 
 type LoginMiddleware struct {
 	// set login password
@@ -26,6 +44,7 @@ type LoginMiddleware struct {
 	sessions map[string]struct{}
 	mutex    *sync.RWMutex
 	login    http.Handler
+	files    []string
 }
 
 func (lm *LoginMiddleware) AddSessionId(id string) {
@@ -45,7 +64,7 @@ func (lm *LoginMiddleware) RedirectToLogin(w http.ResponseWriter, r *http.Reques
 	switch {
 	case r.URL.Path == "/login/":
 		break
-	case r.Referer() != "":
+	case slices.Contains(lm.files, path.Base(r.URL.Path)):
 		break
 	default:
 		http.Redirect(w, r, "/login/", 302)
@@ -90,6 +109,7 @@ func (lm *LoginMiddleware) initialize() {
 	if lm.login == nil {
 		fsys := fs.FS(WWW)
 		html, _ := fs.Sub(fsys, "www")
+		lm.files, _ = getAllFilenames(html)
 		www := http.FileServer(http.FS(html))
 		lm.login = http.StripPrefix("/login", www)
 	}
