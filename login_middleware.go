@@ -121,10 +121,6 @@ func (lm *LoginMiddleware) initialize() {
 	}
 }
 
-func (lm *LoginMiddleware) IsPasswordRequired() bool {
-	return lm.Password != ""
-}
-
 func (lm *LoginMiddleware) IsLocalhost(r *http.Request) bool {
 	hostonly, _, _ := strings.Cut(r.URL.Host, ":")
 	return strings.HasSuffix(hostonly, "localhost")
@@ -136,7 +132,7 @@ func (lm *LoginMiddleware) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		// skip login if no password
-		case !lm.IsPasswordRequired():
+		case lm.Password == "":
 			break
 		// skip login if on localhost
 		case lm.IsLocalhost(r):
@@ -153,4 +149,12 @@ func (lm *LoginMiddleware) Wrap(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// WithPassword is a middleware that checks for a password
+func WithPassword(handler http.Handler, password string) http.Handler {
+	lm := &LoginMiddleware{
+		Password: password,
+	}
+	return lm.Wrap(handler)
 }
