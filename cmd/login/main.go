@@ -1,7 +1,7 @@
-// 1. visit /dir/
-// 2. be redirected to /login/?next=/dir/
+// 1. visit /dir/?a
+// 2. be redirected to /login/?next=/dir/?a
 // 3. enter password 123
-// 4. be redirected to /dir/
+// 4. be redirected to /dir/?a
 
 package main
 

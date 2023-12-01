@@ -68,8 +68,9 @@ func (lm *LoginMiddleware) RedirectToLogin(w http.ResponseWriter, r *http.Reques
 		break
 	default:
 		// redirect to login page
-		// after login, redirect back to original page
-		loginAndNext := fmt.Sprintf("/login/?next=%s", r.URL.Path)
+		// after login, redirect back to original page preserving query strings
+		originalUrl := r.URL.String()
+		loginAndNext := fmt.Sprintf("/login/?next=%s", originalUrl)
 		http.Redirect(w, r, loginAndNext, 302)
 		return
 	}
