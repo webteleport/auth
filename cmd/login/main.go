@@ -1,3 +1,8 @@
+// 1. visit /dir/
+// 2. be redirected to /login/?next=/dir/
+// 3. enter password 123
+// 4. be redirected to /dir/
+
 package main
 
 import (
@@ -8,10 +13,5 @@ import (
 )
 
 func main() {
-	pwd := http.FileServer(http.Dir("."))
-	lm := auth.LoginMiddleware{
-		Password: "123",
-	}
-	handler := lm.Wrap(pwd)
-	ufo.Serve("https://ufo.k0s.io", handler)
+	ufo.Serve("https://ufo.k0s.io", auth.WithPassword(http.FileServer(http.Dir(".")), "123"))
 }

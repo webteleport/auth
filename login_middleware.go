@@ -67,7 +67,10 @@ func (lm *LoginMiddleware) RedirectToLogin(w http.ResponseWriter, r *http.Reques
 	case slices.Contains(lm.files, path.Base(r.URL.Path)):
 		break
 	default:
-		http.Redirect(w, r, "/login/", 302)
+		// redirect to login page
+		// after login, redirect back to original page
+		loginAndNext := fmt.Sprintf("/login/?next=%s", r.URL.Path)
+		http.Redirect(w, r, loginAndNext, 302)
 		return
 	}
 	lm.login.ServeHTTP(w, r)
@@ -78,6 +81,14 @@ func (lm *LoginMiddleware) SetCookiesAndRedirect(w http.ResponseWriter, r *http.
 	lm.AddSessionId(sid)
 	cookies := fmt.Sprintf(`%s="%s"; Path=/; Max-Age=2592000; HttpOnly; Domain=%s`, lm.SessionKey, sid, r.Host)
 	w.Header().Set("Set-Cookie", cookies)
+
+	// redirect to next page
+	next := r.URL.Query().Get("next")
+	if next != "" {
+		http.Redirect(w, r, next, 302)
+		return
+	}
+
 	http.Redirect(w, r, "/", 302)
 }
 
