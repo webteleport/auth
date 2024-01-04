@@ -164,9 +164,12 @@ func (lm *LoginMiddleware) Wrap(next http.Handler) http.Handler {
 }
 
 // WithPassword is a middleware that checks for a password
-func WithPassword(handler http.Handler, password string) http.Handler {
+func WithPassword(handler http.Handler, secret string) http.Handler {
+	if strings.Contains(secret, ":") {
+		return BasicAuth(handler, secret)
+	}
 	lm := &LoginMiddleware{
-		Password: password,
+		Password: secret,
 	}
 	return lm.Wrap(handler)
 }

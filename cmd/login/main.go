@@ -9,9 +9,9 @@ import (
 	"net/http"
 
 	"github.com/webteleport/auth"
-	"github.com/webteleport/webteleport/ufo"
+	"github.com/webteleport/wtf"
 )
 
 func main() {
-	ufo.Serve("https://ufo.k0s.io", auth.WithPassword(http.FileServer(http.Dir(".")), "123"))
+	wtf.Serve("https://ufo.k0s.io", auth.WithPassword(http.FileServer(http.Dir(".")), "123"))
 }
