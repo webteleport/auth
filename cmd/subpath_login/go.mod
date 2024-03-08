@@ -1,4 +1,4 @@
-module github.com/webteleport/auth/cmd/login
+module github.com/webteleport/auth/cmd/subpath_login
 
 go 1.21.6
 

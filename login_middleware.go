@@ -1,8 +1,9 @@
 package auth
 
 import (
-	"embed"
+	_ "embed"
 	"fmt"
+	"io"
 	"io/fs"
 	"net/http"
 	"path"
@@ -13,8 +14,8 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-//go:embed www
-var WWW embed.FS
+//go:embed login.html
+var LoginIndex string
 
 func getAllFilenames(efs fs.FS) (files []string, err error) {
 	if err := fs.WalkDir(efs, ".", func(path string, d fs.DirEntry, err error) error {
@@ -111,6 +112,15 @@ func (lm *LoginMiddleware) IsValidSession(r *http.Request) bool {
 	return true
 }
 
+func LoginHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.WriteHeader(http.StatusUnauthorized)
+		io.WriteString(w, LoginIndex)
+	})
+}
+
 func (lm *LoginMiddleware) initialize() {
 	if lm.mutex == nil {
 		lm.mutex = &sync.RWMutex{}
@@ -119,11 +129,7 @@ func (lm *LoginMiddleware) initialize() {
 		lm.sessions = map[string]struct{}{}
 	}
 	if lm.login == nil {
-		fsys := fs.FS(WWW)
-		html, _ := fs.Sub(fsys, "www")
-		lm.files, _ = getAllFilenames(html)
-		www := http.FileServer(http.FS(html))
-		lm.login = http.StripPrefix("/login", www)
+		lm.login = LoginHandler()
 	}
 	if lm.PasswordKey == "" {
 		lm.PasswordKey = "password"
@@ -156,7 +162,8 @@ func (lm *LoginMiddleware) Wrap(next http.Handler) http.Handler {
 				lm.SetCookiesAndRedirect(w, r)
 				return
 			}
-			lm.RedirectToLogin(w, r)
+			// lm.RedirectToLogin(w, r)
+			lm.login.ServeHTTP(w, r)
 			return
 		}
 		next.ServeHTTP(w, r)
