@@ -62,7 +62,7 @@ func (lm *LoginMiddleware) HasSessionId(id string) bool {
 
 func (lm *LoginMiddleware) RedirectToLogin(w http.ResponseWriter, r *http.Request) {
 	switch {
-	case r.URL.Path == "/login/":
+	case strings.HasSuffix(r.URL.Path, "/login/"):
 		break
 	case slices.Contains(lm.files, path.Base(r.URL.Path)):
 		break
@@ -70,7 +70,7 @@ func (lm *LoginMiddleware) RedirectToLogin(w http.ResponseWriter, r *http.Reques
 		// redirect to login page
 		// after login, redirect back to original page preserving query strings
 		originalUrl := r.URL.String()
-		loginAndNext := fmt.Sprintf("/login/?next=%s", originalUrl)
+		loginAndNext := fmt.Sprintf("./login/?next=%s", originalUrl)
 		http.Redirect(w, r, loginAndNext, 302)
 		return
 	}
@@ -96,7 +96,7 @@ func (lm *LoginMiddleware) SetCookiesAndRedirect(w http.ResponseWriter, r *http.
 func (lm *LoginMiddleware) IsValidLogin(r *http.Request) bool {
 	switch r.Method {
 	case http.MethodGet:
-		return r.URL.Path == fmt.Sprintf("/login/%s", lm.Password)
+		return strings.HasSuffix(r.URL.Path, fmt.Sprintf("/login/%s", lm.Password))
 	case http.MethodPost:
 		return r.PostFormValue(lm.PasswordKey) == lm.Password
 	}
