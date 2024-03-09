@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/google/uuid"
+	"github.com/btwiuse/rng"
 	"golang.org/x/exp/slices"
 )
 
@@ -79,9 +79,9 @@ func (lm *LoginMiddleware) RedirectToLogin(w http.ResponseWriter, r *http.Reques
 }
 
 func (lm *LoginMiddleware) SetCookiesAndRedirect(w http.ResponseWriter, r *http.Request) {
-	sid := uuid.New().String()
+	sid := rng.NewUUID()
 	lm.AddSessionId(sid)
-	cookies := fmt.Sprintf(`%s="%s"; Path=/; Max-Age=2592000; HttpOnly; Domain=%s`, lm.SessionKey, sid, r.Host)
+	cookies := fmt.Sprintf(`%s="%s"; Max-Age=2592000; HttpOnly; SameSite=Lax`, lm.SessionKey, sid)
 	w.Header().Set("Set-Cookie", cookies)
 
 	// redirect to next page
@@ -135,7 +135,7 @@ func (lm *LoginMiddleware) initialize() {
 		lm.PasswordKey = "password"
 	}
 	if lm.SessionKey == "" {
-		lm.SessionKey = "UFOSID"
+		lm.SessionKey = fmt.Sprintf("SESSION%s", rng.NewDigits(8))
 	}
 }
 
